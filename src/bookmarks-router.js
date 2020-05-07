@@ -1,7 +1,7 @@
 const express = require('express')
 const { v4: uuid } = require('uuid')
-const logger = require('../logger')
-const { bookmarks } = require('./store')
+const logger = require('./logger')
+const bookmarks  = require('./bookmarks')
 const validator = require('validator');
 
 const bookmarksRouter = express.Router()
@@ -38,7 +38,7 @@ bookmarksRouter
         } 
         
         if (Number.isNaN(parseFloat(rating))) {
-            logger.error(`Rating is not number`);
+            logger.error('Rating is not number');
             return res
             .status(400)
             .send('Invalid data');
