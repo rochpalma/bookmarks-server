@@ -1,16 +1,30 @@
 const express = require('express')
 const { v4: uuid } = require('uuid')
 const logger = require('./logger')
-const bookmarks  = require('./bookmarks')
+const { PORT } = require('./config');
+const { bookmarks }  = require('./store')
 const validator = require('validator');
+const BookmarksService = require('./bookmarks-service');
 
 const bookmarksRouter = express.Router()
 const bodyParser = express.json()
 
+const serializeBookmark = bookmark => ({
+    id: bookmark.id,
+    title: bookmark.title,
+    url: bookmark.url,
+    description: bookmark.description,
+    rating: Number(bookmark.rating),
+  })
+
 bookmarksRouter
     .route('/bookmarks')
-    .get((req, res) => {
-        res.json(bookmarks);
+    .get((req, res, next) => {
+        BookmarksService.getAllBookmarks(req.app.get('db'))
+        .then(bookmarks => {
+            res.json(bookmarks.map(serializeBookmark))
+        })
+        .catch(next)
     })
 
     .post(bodyParser, (req, res) => {
@@ -66,26 +80,27 @@ bookmarksRouter
 
 bookmarksRouter
     .route('/bookmarks/:id')
-    .get((req, res) => {
-        const { id } = req.params;
-        const bookmark = bookmarks.find(bookmark => bookmark.id == id);
-    
-        if (!bookmark) {
-        logger.error(`Bookmark with id ${id} not found.`);
-        return res
-            .status(404)
-            .send('Bookmark Not Found');
-        }
-
-        res.json(bookmark);
+    .get((req, res, next) => {
+        const { bookmark_id } = req.params
+        BookmarksService.getById(req.app.get('db'), bookmark_id)
+        .then(bookmark => {
+            if (!bookmark) {
+            logger.error(`Bookmark with id ${bookmark_id} not found.`)
+            return res.status(404).json({
+                error: { message: `Bookmark Not Found` }
+            })
+            }
+            res.json(serializeBookmark(bookmark))
+        })
+        .catch(next)
     })
   .delete((req, res) => {
-    const { id } = req.params;
+    const { bookmark_id } = req.params;
   
-    const bookmarkIndex = bookmarks.findIndex(bookmark => bookmark.id == id);
+    const bookmarkIndex = bookmarks.findIndex(bookmark => bookmark.id == bookmark_id);
   
     if (bookmarkIndex === -1) {
-      logger.error(`Bookmark with id ${id} not found.`);
+      logger.error(`Bookmark with id ${bookmark_id} not found.`);
       return res
         .status(404)
         .send('Not Found');
