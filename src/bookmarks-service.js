@@ -25,5 +25,5 @@ const BookmarksService = {
         .update(newBookmarkFields)
     },
   }
-  
+   
   module.exports = BookmarksService
