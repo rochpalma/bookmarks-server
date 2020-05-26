@@ -29,7 +29,11 @@ app.use(function validateBearerToken(req, res, next) {
     next()
 })
 
-app.use(bookmarksRouter)
+app.use('/api/bookmarks',bookmarksRouter)
+
+app.get('/', (req, res) => {
+    res.send('Hello, world!')
+  })
 
 app.use(function errorHandler(error, req, res, next) {
     let response
